@@ -1,0 +1,190 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+import numpy as np
+import itertools
+import math
+
+#generates all possible tuples of length l with entries from 0 to N
+def lN(l,N):
+    #generates all possible tuples with entries from 0 to N
+    M=range(0,N+1)
+    return itertools.product(M, repeat=l)
+
+#decides if all the words have a zero
+#INPUT: a generating matrix C over ZZ_q given by a list of lists
+#OUTPUT: False if there is a word of maximal weight, True else
+def WC(C,q):
+    k=len(C)
+    G=np.array(C)
+    codelength=len(C[0])
+    coefficient_list=lN(k,q-1)
+    #for i in range(0,k):
+     #   coefficient_list=[coefficient_list[k]+[j] for k in range(0,len(coefficient_list)) for j in range(0,q)]
+    codewords0=[]
+    for coef in coefficient_list:
+        codewords0=codewords0+[tuple((np.array([coef]).dot(G) % q)[0])]
+    codewords=set(codewords0)
+    W=0
+    for c in codewords:
+        if c.count(0)==0:
+            return False
+    return True
+
+#the same as the previous one, but now we don't consider all the words in the code. We take the linear combinations of the rows in the generating matrix with coefficients 0,1,...,eps. 
+def WC_eps(C,q,eps):
+    k=len(C)
+    G=np.array(C)
+    codelength=len(C[0])
+    coefficient_list=lN(k,eps)
+    #for i in range(0,k):
+     #   coefficient_list=[coefficient_list[k]+[j] for k in range(0,len(coefficient_list)) for j in range(0,q)]
+    codewords0=[]
+    for coef in coefficient_list:
+        codewords0=codewords0+[tuple((np.array([coef]).dot(G) % q)[0])]
+    codewords=set(codewords0)
+    W=0
+    for c in codewords:
+        if c.count(0)==0:
+            return False
+    return True
+
+#INPUT: a list L and a natural number d
+#OUTPUT: True if there is at least 1 zero and no more than d-1
+def zero_count(L,d):
+    return (L.count(0)>0)*(L.count(0)<d)
+
+
+#INPUT: a list x and a natural number N
+#OUTPUT: True if the sum of the entries of x is 0 mod N  
+def mod_N(x,N):
+    return ((sum(x)%N==0))
+
+
+
+#INPUT: a matrix M
+#OUTPUT: False if there is a column of zeroes
+def column_of_zeroes_check(M):
+    l=len(M)
+    d=len(M[0])
+    for j in range(0,d):
+        s=0
+        for k in range(0,l):
+            s+=M[k][j]
+        if s==0:
+            return False
+    return True
+
+#INPUT: a matrix M
+#OUTPUT: True if there is a column of zeroes
+def column_of_zeroes_check_reversed(M):
+    l=len(M)
+    d=len(M[0])
+    for j in range(0,d):
+        s=0
+        for k in range(0,l):
+            s+=M[k][j]
+        if s==0:
+            return True
+    return False
+
+
+def flatten(list_of_lists):
+    if len(list_of_lists) == 0:
+        return list_of_lists
+    if isinstance(list_of_lists[0], list):
+        return flatten(list_of_lists[0]) + flatten(list_of_lists[1:])
+    return list_of_lists[:1] + flatten(list_of_lists[1:])
+
+
+#INPUT: a list x
+#output: True if the gcd of entries of x is 1
+def gcd_check(x):
+    gcd=math.gcd(*flatten(x))
+    if gcd==1:
+        return True
+    else:
+        return False
+    
+#INPUT: a matrix x
+#OUTPUT: return all possible permutations of columns and rows of x
+def permutations_of_matrix(x):
+    x=np.array(x)
+    cols=[tuple(x[:,i]) for i in range(0,len(x[0]))]
+    M1=itertools.permutations( cols)
+    M2=[]
+    for x in M1:
+        x=np.array(x)
+        cols=[tuple(x[:,i]) for i in range(0,len(x[0]))]
+        M2=M2+list(tuple(tuple(z) for z in y) for y in itertools.permutations(cols))
+    return M2
+
+#INPUT: a list of matrices L and an element of the list x
+#OUTPUT: False, if there is a permutation of x later in the list
+def is_perm_in(x,L):
+    i=L.index(x)
+    M=permutations_of_matrix(L[i])
+    #print(M)
+    flag=True
+    for m in M:
+        if m in L[(i+1):]:
+            flag=flag*False
+            break
+    return flag
+
+#INPUT: a generating matrix C of a lienar code over ZZ_q
+#OUTPUT: the h^*-polynomial of the corresponding simplex 
+def h_star_code(C,q):
+    G=matrix(C)
+    R=QQ['t']
+    t=R.gen()
+    k=len(C)
+    codelength=len(C[0])
+    coefficient_list=lN(k,q-1)
+    codewords0=[]
+    for coef in coefficient_list:
+        codewords0=codewords0+[tuple((matrix(coef)*G % q)[0])]
+    codewords=set(codewords0)
+    out=0
+    for c in codewords:
+        h=sum(c)/q
+        out=out+t^h
+    return out
+
+
+#INPUT: generating matrix C over ZZ_q
+#OUTPUT: weight enumerator of the corresponding code
+def WC_full(C,N):
+    k=len(C)
+    G=np.array(C)
+    codelength=len(C[0])
+    coefficient_list=lN(k,N-1)
+    codewords0=[]
+    for coef in coefficient_list:
+        codewords0=codewords0+[tuple((np.array([coef]).dot(G) % N)[0])]
+    codewords=set(codewords0)
+    ehrhart=[0 for i in range(0,codelength)]
+    weight=[0 for i in range(0,codelength)]
+    for c in codewords:
+        h=sum(c)/N
+        h=int(h)
+        w=codelength-c.count(0)
+        ehrhart[h]=ehrhart[h]+1
+        weight[w]+=1
+    return ehrhart,weight
+    
+    
+#INPUT: a list of matrices L and an element x of L and a number N
+#OUTPUT: False, if there is a matrix y after x in the list such that the codes generated by x and y have the same weight enumerators and h^*-polynomials 
+def weight_ehrhart_check(x,L,N):
+    i=L.index(x)
+    flag=True
+    for y in L[(i+1):]: 
+        if WC_full(x,N)==WC_full(y,N):
+            flag=flag*False
+            break   
+    return flag
+
+
