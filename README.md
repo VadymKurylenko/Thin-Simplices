@@ -6,4 +6,4 @@ In the file Thin codes.ipynb the function thin_codes(pool,d,N,r) allows one to c
 
 Moreover, the function thin_codes_experimental allows one to relatively quickly find examples of thin linear codes. 
 
-In the folder ThinSimplices there is a database of thin simplices of various dimensions. 
+In the folder ThinSimplices there is a database of thin simplices of various dimensions. The files are named ThinSimplicesd_N or experimental_ThinSimplicesd_N, where d is the dimension of the corresponding simplex and N is the N_\Delta.  The first line of each file contains the list of all the generating matrices found. Each of the other lines gives further info  such as h^* and weight enumerator of each entry. 
